@@ -11,4 +11,16 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="WordFinderTests\bin\Debug\net8.0\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="WordFinderTests\bin\Debug\net8.0\appsettings.json" />
+      <_ContentIncludedByDefault Remove="WordFinderTests\bin\Debug\net8.0\WordFinder.deps.json" />
+      <_ContentIncludedByDefault Remove="WordFinderTests\bin\Debug\net8.0\WordFinder.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="WordFinderTests\bin\Debug\net8.0\WordFinderTests.deps.json" />
+      <_ContentIncludedByDefault Remove="WordFinderTests\bin\Debug\net8.0\WordFinderTests.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="WordFinderTests\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="WordFinderTests\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="WordFinderTests\obj\WordFinderTests.csproj.nuget.dgspec.json" />
+    </ItemGroup>
+
 </Project>
