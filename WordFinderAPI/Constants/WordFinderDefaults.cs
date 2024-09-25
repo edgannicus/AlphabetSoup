@@ -2,6 +2,7 @@ namespace WordFinderAPI.Constants
 {
     public static class WordFinderDefaults
     {
+        public const int MaxMatrixSize = 64;
         // Default matrix if none is provided
         public static readonly List<string> DefaultMatrix = new List<string>
         {

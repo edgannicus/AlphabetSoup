@@ -14,9 +14,9 @@ namespace WordFinderAPI.Services
         // Constructor that receives a matrix or uses a default if input is null or empty
         public WordFinder(IEnumerable<string>? matrixInput)
         {
-            if (matrixInput == null || !matrixInput.Any())
+            if (matrixInput == null || !matrixInput.Any() || !IsValidMatrix(matrixInput))
             {
-                // Use the default matrix if input is null or empty
+                // Use the default matrix if input is null, empty or invalid
                 _matrix = WordFinderDefaults.DefaultMatrix.ToList();
             }
             else
@@ -96,49 +96,55 @@ namespace WordFinderAPI.Services
             return true;
         }
 
+        // Method to validate if the matrix input is well-formed
+        private bool IsValidMatrix(IEnumerable<string> matrixInput)
+        {
+            if (matrixInput == null || !matrixInput.Any()) return false;
+
+            // Ensure all rows have the same length
+            int rowLength = matrixInput.First().Length;
+            return matrixInput.All(row => row.Length == rowLength);
+        }
+
         // Method to search for words in the matrix
         public IEnumerable<string> Find(IEnumerable<string>? wordstream)
         {
             if (wordstream == null || !wordstream.Any())
             {
-                // Use default words if input is null or empty
-                wordstream = WordFinderDefaults.DefaultWords;
+                // If the word stream is null or empty, return an empty set of words
+                return new List<string>();
             }
 
             var foundWords = new HashSet<string>();
-            
+    
             // Search words in rows and columns
             foreach (var word in wordstream)
             {
-                // Validate that the word contains only uppercase letters
-                if (!ValidateUpperCase(word))
-                {
-                    continue;
-                }
-
-                // Search in rows
+                // Ensure word is in uppercase and search in rows
                 for (int row = 0; row < _matrix.Count; row++)
                 {
-                    if (_matrix[row].Contains(word))
+                    if (_matrix[row].Contains(word) && !foundWords.Contains(word))
                     {
                         foundWords.Add(word);
-                        MarkWordInResultMatrix(word,row, false);
+                        MarkWordInResultMatrix(word, row, false);  // Mark word horizontally
                     }
                 }
+
                 // Search in columns
                 for (int col = 0; col < _columns.Count; col++)
                 {
-                    if (_columns[col].Contains(word))
+                    if (_columns[col].Contains(word) && !foundWords.Contains(word))
                     {
                         foundWords.Add(word);
-                        MarkWordInResultMatrix(word, col, true);
+                        MarkWordInResultMatrix(word, col, true);   // Mark word vertically
                     }
                 }
             }
 
-            return foundWords.Take(10); // Return the first 10 found words
+            // Return the found words or an empty list if none are found
+            return foundWords.Any() ? foundWords.Take(10) : new List<string>();
         }
-        
+
         // Method to mark the found word in the result matrix
         private void MarkWordInResultMatrix(string word, int index, bool isVertical)
         {
@@ -159,7 +165,7 @@ namespace WordFinderAPI.Services
                 }
             }
         }
-
+        
         // Method to get the resulting matrix with only found words
         public char[,] GetResultMatrix()
         {

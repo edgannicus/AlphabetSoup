@@ -1,57 +1,1 @@
-namespace WordFinderAPI.Controllers
-{
-    [Route("api/[controller]")]
-    [ApiController]
-    public class WordFinderController : ControllerBase
-    {
-        [HttpPost]
-        public ActionResult<WordFinderResponse> FindWords([FromBody] WordFinderRequest request)
-        {
-            // Validate if the matrix and words are provided, if not, defaults will be used
-            try
-            {
-                // Instantiate WordFinder, defaults will be handled inside the class
-                WordFinder finder = new WordFinder(request.Matrix);
-
-                // Perform the word search
-                var wordsFound = finder.Find(request.Words);
-
-                // Get the matrices
-                var fullMatrix = ConvertMatrixToStringList(finder.GetBoard());
-                var resultMatrix = ConvertMatrixToStringList(finder.GetResultMatrix());
-
-                // Create the response with the found words and both matrices
-                var response = new WordFinderResponse
-                {
-                    WordsFound = wordsFound.ToList(),
-                    Matrix = fullMatrix,
-                    ResultMatrix = resultMatrix // Matrix with only found words
-                };
-
-                return Ok(response);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message); // Capture any errors
-            }
-        }
-
-        // Helper method to convert a matrix of chars into a list of strings
-        private List<string> ConvertMatrixToStringList(char[,] matrix)
-        {
-            var result = new List<string>();
-
-            for (int row = 0; row < matrix.GetLength(0); row++)
-            {
-                string rowString = "";
-                for (int col = 0; col < matrix.GetLength(1); col++)
-                {
-                    rowString += matrix[row, col];
-                }
-                result.Add(rowString);
-            }
-
-            return result;
-        }
-    }
-}
+namespace WordFinderAPI.Controllers{    [Route("api/[controller]")]    [ApiController]    public class WordFinderController : ControllerBase    {        // POST: /api/WordFinder/find-words        [HttpPost("find-words")]        public ActionResult<List<string>> FindWordsInMatrix([FromBody] List<string> matrixInput)        {            // Validate that a matrix is provided            if (matrixInput == null || matrixInput.Count == 0)            {                return BadRequest("Matrix cannot be null or empty.");            }            // Validate that the matrix size does not exceed 64x64            if (matrixInput.Count > WordFinderDefaults.MaxMatrixSize || matrixInput.Any(row => row.Length > WordFinderDefaults.MaxMatrixSize))            {                return BadRequest($"Matrix size cannot exceed {WordFinderDefaults.MaxMatrixSize}x{WordFinderDefaults.MaxMatrixSize}.");            }            try            {                // Create a WordFinder instance with the provided matrix                WordFinder finder = new WordFinder(matrixInput);                // Execute the dynamic search in the matrix to find words                var wordsFound = finder.FindWordsInMatrix();                // Return the list of found words                return Ok(wordsFound.ToList());            }            catch (ArgumentException ex)            {                return BadRequest(ex.Message); // Capture any errors            }        }        // POST: /api/WordFinder        [HttpPost("find-given-words")]        public ActionResult<WordFinderResponse> FindWordsWithWordsAndMatrix([FromBody] WordFinderRequest request)        {            // Validate if the matrix and words are provided, or use default values if not            try            {                // If the matrix is null or empty, use the default matrix                List<string> matrix = request.Matrix?.Any() == true ? request.Matrix : WordFinderDefaults.DefaultMatrix;                // If the word list is null or empty, use default words                List<string> words = request.Words?.Any() == true ? request.Words : WordFinderDefaults.DefaultWords;                // Instantiate WordFinder, defaults will be handled inside the class                WordFinder finder = new WordFinder(matrix);                // Perform the word search with the provided or default words                var wordsFound = finder.Find(words);                // Get the full matrix and the result matrix (with found words only)                var fullMatrix = ConvertMatrixToStringList(finder.GetBoard());                var resultMatrix = ConvertMatrixToStringList(finder.GetResultMatrix());                // Create the response with the found words and both matrices                var response = new WordFinderResponse                {                    WordsFound = wordsFound.ToList(),                    Matrix = fullMatrix,                    ResultMatrix = resultMatrix // Matrix with only the found words                };                return Ok(response);            }            catch (ArgumentException ex)            {                return BadRequest(ex.Message); // Capture any errors            }        }        // Helper method to convert a matrix of chars into a list of strings        private List<string> ConvertMatrixToStringList(char[,] matrix)        {            var result = new List<string>();            for (int row = 0; row < matrix.GetLength(0); row++)            {                string rowString = "";                for (int col = 0; col < matrix.GetLength(1); col++)                {                    rowString += matrix[row, col];                }                result.Add(rowString);            }            return result;        }    }}
