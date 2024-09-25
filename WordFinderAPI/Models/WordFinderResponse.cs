@@ -2,7 +2,8 @@ namespace WordFinderAPI.Models
 {
     public class WordFinderResponse
     {
-        public IEnumerable<string> WordsFound { get; set; }  // Las palabras encontradas
-        public List<string> Matrix { get; set; }             // La matriz utilizada en la búsqueda
+        public List<string> WordsFound { get; set; }  // List of found words
+        public List<string> Matrix { get; set; }      // Full matrix used
+        public List<string> ResultMatrix { get; set; } // Matrix with only the found words
     }
 }

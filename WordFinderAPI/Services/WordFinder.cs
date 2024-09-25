@@ -1,110 +1,175 @@
 namespace WordFinderAPI.Services
-{ 
+{
     public class WordFinder
     {
-        private char[,] board;
-        private List<string> matrix;
-        private List<string> columns;
-        private Random random = new Random();
-        private int matrixSize;
+        private readonly char[,] _board;
+        private readonly char[,] _resultMatrix;
+        private readonly List<string> _matrix;
+        private readonly List<string> _columns;
+        private readonly Random _random = new Random();
+        
+        // Regex to validate only uppercase letters
+        private static readonly Regex UpperCaseLetterRegex = new Regex("^[A-Z]+$", RegexOptions.Compiled);
 
-        // Constructor que recibe una matriz o la genera dinámicamente
-        public WordFinder(IEnumerable<string> matrixInput)
+        // Constructor that receives a matrix or uses a default if input is null or empty
+        public WordFinder(IEnumerable<string>? matrixInput)
         {
-            matrix = matrixInput.ToList();
-            matrixSize = matrix.Max(row => row.Length);
-            
-            // Inicializa la matriz con ceros ('0') para poder modificarla
-            board = new char[matrix.Count, matrixSize];
-            FillBoardWithMatrix();
-
-            // Prepara las columnas para la búsqueda vertical
-            columns = new List<string>();
-            if (matrix.Count > 0)
+            if (matrixInput == null || !matrixInput.Any())
             {
-                for (int col = 0; col < matrix[0].Length; col++)
+                // Use the default matrix if input is null or empty
+                _matrix = WordFinderDefaults.DefaultMatrix.ToList();
+            }
+            else
+            {
+                // Validate that the input contains only uppercase letters
+                _matrix = matrixInput.Where(row => ValidateUpperCase(row)).ToList();
+            }
+
+            var matrixSize = _matrix.Max(row => row.Length);
+
+            // Initialize the board and resultMatrix with '0'
+            _board = new char[_matrix.Count, matrixSize];
+            _resultMatrix = new char[_matrix.Count, matrixSize];
+            FillBoardWithMatrix();
+            
+            // Prepare columns for vertical search
+            _columns = new List<string>();
+            if (_matrix.Count > 0)
+            {
+                for (int col = 0; col < _matrix[0].Length; col++)
                 {
                     string column = "";
-                    for (int row = 0; row < matrix.Count; row++)
+                    for (int row = 0; row < _matrix.Count; row++)
                     {
-                        column += board[row, col];
+                        column += _board[row, col];
                     }
-                    columns.Add(column);
+                    _columns.Add(column);
                 }
             }
         }
 
-        // Método para buscar palabras en la matriz
-        public IEnumerable<string> Find(IEnumerable<string> wordstream)
-        {
-            var foundWords = new HashSet<string>();
-
-            foreach (var word in wordstream)
-            {
-                // Busca la palabra en filas
-                if (matrix.Any(row => row.Contains(word)))
-                {
-                    foundWords.Add(word);
-                }
-
-                // Busca la palabra en columnas
-                if (columns.Any(col => col.Contains(word)))
-                {
-                    foundWords.Add(word);
-                }
-            }
-
-            return foundWords.Take(10);  // Retorna las primeras 10 palabras encontradas
-        }
-
-        // Llena el board con las palabras proporcionadas en la matriz
+        // Fill the board with the provided matrix
         private void FillBoardWithMatrix()
         {
-            for (int row = 0; row < matrix.Count; row++)
+            for (int row = 0; row < _matrix.Count; row++)
             {
-                var matrixRow = matrix[row];
+                var matrixRow = _matrix[row];
                 for (int col = 0; col < matrixRow.Length; col++)
                 {
-                    board[row, col] = matrixRow[col];
+                    _board[row, col] = matrixRow[col];
+                    _resultMatrix[row, col] = '0';
                 }
             }
 
-            // Rellenar con letras aleatorias en los espacios vacíos (si hay '0')
+            // Fill empty spaces in the board with random letters
             FillBoardWithRandomLetters();
         }
 
-        // Rellena los espacios vacíos con letras aleatorias
+        // Generate dynamic A-Z letters and fill empty spaces
         private void FillBoardWithRandomLetters()
         {
-            for (int row = 0; row < board.GetLength(0); row++)
+            for (int row = 0; row < _board.GetLength(0); row++)
             {
-                for (int col = 0; col < board.GetLength(1); col++)
+                for (int col = 0; col < _board.GetLength(1); col++)
                 {
-                    if (board[row, col] == '\0')  // Solo llena los espacios vacíos
+                    if (_board[row, col] == '\0') // Only fill empty spaces
                     {
-                        board[row, col] = (char)random.Next('A', 'Z' + 1);
+                        _board[row, col] = GenerateRandomUpperCaseLetter();
                     }
                 }
             }
         }
 
-        // Método para mostrar la matriz (para depuración)
-        public void DisplayBoard()
+        // Method to generate a random uppercase letter (A-Z)
+        private char GenerateRandomUpperCaseLetter()
         {
-            for (int row = 0; row < board.GetLength(0); row++)
+            return (char)_random.Next('A', 'Z' + 1);
+        }
+
+        // Method to validate that the input string contains only uppercase letters
+        private bool ValidateUpperCase(string input)
+        {
+            if (!UpperCaseLetterRegex.IsMatch(input))
             {
-                for (int col = 0; col < board.GetLength(1); col++)
+                throw new ArgumentException($"Invalid string '{input}'. Only uppercase letters are allowed.");
+            }
+            return true;
+        }
+
+        // Method to search for words in the matrix
+        public IEnumerable<string> Find(IEnumerable<string>? wordstream)
+        {
+            if (wordstream == null || !wordstream.Any())
+            {
+                // Use default words if input is null or empty
+                wordstream = WordFinderDefaults.DefaultWords;
+            }
+
+            var foundWords = new HashSet<string>();
+            
+            // Search words in rows and columns
+            foreach (var word in wordstream)
+            {
+                // Validate that the word contains only uppercase letters
+                if (!ValidateUpperCase(word))
                 {
-                    Console.Write(board[row, col] + " ");
+                    continue;
                 }
-                Console.WriteLine();
+
+                // Search in rows
+                for (int row = 0; row < _matrix.Count; row++)
+                {
+                    if (_matrix[row].Contains(word))
+                    {
+                        foundWords.Add(word);
+                        MarkWordInResultMatrix(word,row, false);
+                    }
+                }
+                // Search in columns
+                for (int col = 0; col < _columns.Count; col++)
+                {
+                    if (_columns[col].Contains(word))
+                    {
+                        foundWords.Add(word);
+                        MarkWordInResultMatrix(word, col, true);
+                    }
+                }
+            }
+
+            return foundWords.Take(10); // Return the first 10 found words
+        }
+        
+        // Method to mark the found word in the result matrix
+        private void MarkWordInResultMatrix(string word, int index, bool isVertical)
+        {
+            if (isVertical)
+            {
+                int startRow = _columns[index].IndexOf(word, StringComparison.Ordinal);
+                for (int i = 0; i < word.Length; i++)
+                {
+                    _resultMatrix[startRow + i, index] = word[i];
+                }
+            }
+            else
+            {
+                int startCol = _matrix[index].IndexOf(word, StringComparison.Ordinal);
+                for (int i = 0; i < word.Length; i++)
+                {
+                    _resultMatrix[index, startCol + i] = word[i];
+                }
             }
         }
 
-        // Método para obtener la matriz resultante
+        // Method to get the resulting matrix with only found words
+        public char[,] GetResultMatrix()
+        {
+            return _resultMatrix;
+        }
+
+        // Method to get the full board matrix
         public char[,] GetBoard()
         {
-            return board;
+            return _board;
         }
     }
 }
