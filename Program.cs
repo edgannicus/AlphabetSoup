@@ -1,3 +1,5 @@
+using WordFinderAPI.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Agregar servicios a la aplicación
@@ -14,12 +16,15 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Register the IWordFinder with its implementation
+builder.Services.AddScoped<IWordFinder, WordFinder>();
+
+
 // Configurar Swagger si quieres documentación API
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
 // Configuración del pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
