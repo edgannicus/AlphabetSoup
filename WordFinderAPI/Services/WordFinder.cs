@@ -2,10 +2,10 @@ public class WordFinder : IWordFinder
 {
     private readonly List<string> _matrix;
 
-    // Constructor que solo almacena la matriz
+    // Constructor that only stores the matrix
     public WordFinder(IEnumerable<string> matrix)
     {
-        _matrix = matrix.ToList();  // Ahora guardamos la matriz que el controlador pasa correctamente
+        _matrix = matrix.ToList();  // Now storing the matrix passed correctly by the controller
     }
 
     // Find function to search for words in the matrix
@@ -38,7 +38,7 @@ public class WordFinder : IWordFinder
         {
             if (_matrix[row].Contains(word))
             {
-                return true;  // Found word horizontally
+                return true;  // Word found horizontally
             }
         }
 
@@ -54,7 +54,7 @@ public class WordFinder : IWordFinder
 
             if (verticalWord.Contains(word))
             {
-                return true;  // Found word vertically
+                return true;  // Word found vertically
             }
         }
 

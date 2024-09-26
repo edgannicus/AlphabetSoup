@@ -1,5 +1,3 @@
-using WordFinderAPI.Services;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Agregar servicios a la aplicación
